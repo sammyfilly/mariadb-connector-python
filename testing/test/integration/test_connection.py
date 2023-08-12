@@ -30,23 +30,21 @@ class TestConnection(unittest.TestCase):
                             unix_socket="/does_not_exist/x.sock",
                             port=default_conf["port"],
                             host=default_conf["host"])
-        except (mariadb.OperationalError,):
+        except mariadb.OperationalError:
             pass
 
     def test_connection_default_file(self):
         if os.path.exists("client.cnf"):
             os.remove("client.cnf")
         default_conf = conf()
-        f = open("client.cnf", "w+")
-        f.write("[client]\n")
-        f.write("host =%s\n" % default_conf["host"])
-        f.write("port =%i\n" % default_conf["port"])
-        f.write("user =%s\n" % default_conf["user"])
-        if "password" in default_conf:
-            f.write("password =%s\n" % default_conf["password"])
-        f.write("database =%s\n" % default_conf["database"])
-        f.close()
-
+        with open("client.cnf", "w+") as f:
+            f.write("[client]\n")
+            f.write("host =%s\n" % default_conf["host"])
+            f.write("port =%i\n" % default_conf["port"])
+            f.write("user =%s\n" % default_conf["user"])
+            if "password" in default_conf:
+                f.write("password =%s\n" % default_conf["password"])
+            f.write("database =%s\n" % default_conf["database"])
         new_conn = mariadb.connect(user=default_conf["user"], ssl=True,
                                    default_file="./client.cnf")
         self.assertEqual(new_conn.database, default_conf["database"])
@@ -68,7 +66,7 @@ class TestConnection(unittest.TestCase):
         cursor.execute("CREATE TEMPORARY TABLE t1 (a int)")
         try:
             cursor.execute("LOAD DATA LOCAL INFILE 'x.x' INTO TABLE t1")
-        except (mariadb.OperationalError,):
+        except mariadb.OperationalError:
             pass
         del cursor
         del new_conn
@@ -265,7 +263,6 @@ class TestConnection(unittest.TestCase):
         except mariadb.ProgrammingError:
             self.assertLess(parse_version(mariadb.mariadbapi_version),
                             parse_version('3.3.0'))
-            pass
 
 
 if __name__ == '__main__':

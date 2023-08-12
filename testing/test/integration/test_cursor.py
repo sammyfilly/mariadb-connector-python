@@ -1302,7 +1302,7 @@ class TestCursor(unittest.TestCase):
                        "BEGIN\nSET o1:=CAST(CONCAT(s1,s2) AS "
                        "char CHARACTER SET utf8mb4);\nEND")
 
-        for i in range(0, 500):
+        for _ in range(0, 500):
             cursor.callproc("p2", ("foo", "bar", 1))
             row = cursor.fetchone()
             self.assertEqual(row[0], "foobar")

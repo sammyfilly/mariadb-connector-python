@@ -85,7 +85,7 @@ class TestPooling(unittest.TestCase):
 
         pconn = pool.get_connection()
         old_id = pconn.connection_id
-        cursor.execute("KILL %s" % (old_id,))
+        cursor.execute(f"KILL {old_id}")
         pconn.close()
 
         pconn = pool.get_connection()
@@ -108,7 +108,7 @@ class TestPooling(unittest.TestCase):
 
         pconn = pool.get_connection()
         old_id = pconn.connection_id
-        cursor.execute("KILL %s" % (old_id,))
+        cursor.execute(f"KILL {old_id}")
         pconn.close()
 
         pconn = pool.get_connection()
@@ -138,15 +138,15 @@ class TestPooling(unittest.TestCase):
 
         cursor.execute(sql)
 
-        for i in range(0, 10):
+        for _ in range(0, 10):
             pconn = pool.get_connection()
             ids.append(pconn.connection_id)
-            cursor.execute("KILL %s" % (pconn.connection_id,))
+            cursor.execute(f"KILL {pconn.connection_id}")
             pconn.close()
 
         new_ids = []
 
-        for i in range(0, 10):
+        for _ in range(0, 10):
             pconn = pool.get_connection()
             new_ids.append(pconn.connection_id)
             self.assertEqual(pconn.connection_id in ids, False)
@@ -155,7 +155,7 @@ class TestPooling(unittest.TestCase):
             cursor.close()
             pconn.close()
 
-        for i in range(0, 10):
+        for _ in range(0, 10):
             pconn = pool.get_connection()
             self.assertEqual(pconn.connection_id in new_ids, True)
             pconn.close()
@@ -174,12 +174,12 @@ class TestPooling(unittest.TestCase):
         pool = mariadb.ConnectionPool(pool_name="CONPY245",
                                       pool_size=pool_size,
                                       **default_conf)
-        for i in range(0, iterations):
-            for j in range(0, pool_size):
+        for _ in range(0, iterations):
+            for _ in range(0, pool_size):
                 conn = pool.get_connection()
                 conn.close()
 
-        for i in range(0, pool_size):
+        for _ in range(0, pool_size):
             conn = pool.get_connection()
             self.assertEqual(conn._used, iterations + 1)
             conn.close()
@@ -209,9 +209,7 @@ class TestPooling(unittest.TestCase):
         default_conf = conf()
         pool = mariadb.ConnectionPool(pool_name="test_max_size", pool_size=6,
                                       **default_conf)
-        connections = []
-        for i in range(0, 6):
-            connections.append(pool.get_connection())
+        connections = [pool.get_connection() for _ in range(0, 6)]
         self.assertRaises(mariadb.PoolError, lambda:pool.get_connection())
 
         for c in connections:
@@ -227,7 +225,7 @@ class TestPooling(unittest.TestCase):
             pool.close()
             raise
 
-        for i in range(1, 6):
+        for _ in range(1, 6):
             pool.add_connection()
         try:
             pool.add_connection()
@@ -256,7 +254,7 @@ class TestPooling(unittest.TestCase):
             raise
 
         try:
-            for i in range(1, 6):
+            for _ in range(1, 6):
                 pool.add_connection()
             conn = mariadb.connect(pool_name="test_conpy69")
             conn.autocommit = True
@@ -342,7 +340,7 @@ class TestPooling(unittest.TestCase):
             pool.close()
             raise
 
-        for j in range(3):
+        for _ in range(3):
             c = mariadb.connect(**default_conf)
             pool.add_connection(c)
         pool.close()
@@ -362,7 +360,7 @@ class TestPooling(unittest.TestCase):
         default_conf = conf()
         pool = mariadb.ConnectionPool(pool_name="test_conpy256",
                                pool_size=size, **default_conf)
-        for i in range(size):
+        for _ in range(size):
             c= pool.get_connection()
             self.assertNotEqual(c in connections, True)
             connections.append(c)

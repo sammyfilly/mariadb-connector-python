@@ -8,16 +8,14 @@ from configparser import ConfigParser
 # read the contents of your README file
 from os import path
 
-if os.name == "posix":
-    from mariadb_posix import get_config
 if os.name == "nt":
     from mariadb_windows import get_config  # noqa: F811
 
+elif os.name == "posix":
+    from mariadb_posix import get_config
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
-
-define_macros = []
 
 # read settings from site.cfg
 c = ConfigParser()
@@ -36,13 +34,12 @@ PY_MARIADB_PRE_RELEASE_NR = 0
 PY_MARIADB_POST_RELEASE_SEGMENT = None
 PY_MARIADB_POST_RELEASE_NR = 0
 
-PY_MARIADB_VERSION = "%s.%s.%s" % (PY_MARIADB_MAJOR_VERSION,
-                                   PY_MARIADB_MINOR_VERSION,
-                                   PY_MARIADB_PATCH_VERSION)
+PY_MARIADB_VERSION = f"{PY_MARIADB_MAJOR_VERSION}.{PY_MARIADB_MINOR_VERSION}.{PY_MARIADB_PATCH_VERSION}"
 
 if PY_MARIADB_POST_RELEASE_SEGMENT:
-    PY_MARIADB_VERSION += ".%s" % (PY_MARIADB_POST_RELEASE_SEGMENT +
-                                   PY_MARIADB_POST_RELEASE_NR)
+    PY_MARIADB_VERSION += (
+        f".{PY_MARIADB_POST_RELEASE_SEGMENT + PY_MARIADB_POST_RELEASE_NR}"
+    )
 
 PY_MARIADB_VERSION_INFO = (PY_MARIADB_MAJOR_VERSION,
                            PY_MARIADB_MINOR_VERSION,
@@ -58,19 +55,21 @@ if PY_MARIADB_POST_RELEASE_SEGMENT:
                                   PY_MARIADB_POST_RELEASE_SEGMENT,
                                   PY_MARIADB_POST_RELEASE_NR)
 
-define_macros.append(("PY_MARIADB_MAJOR_VERSION", PY_MARIADB_MAJOR_VERSION))
-define_macros.append(("PY_MARIADB_MINOR_VERSION", PY_MARIADB_MINOR_VERSION))
-define_macros.append(("PY_MARIADB_PATCH_VERSION", PY_MARIADB_PATCH_VERSION))
-define_macros.append(("PY_MARIADB_PRE_RELEASE_SEGMENT", "\"%s\"" %
-                      PY_MARIADB_PRE_RELEASE_SEGMENT))
-define_macros.append(("PY_MARIADB_PRE_RELEASE_NR", "\"%s\"" %
-                      PY_MARIADB_PRE_RELEASE_NR))
-define_macros.append(("PY_MARIADB_POST_RELEASE_SEGMENT", "\"%s\"" %
-                      PY_MARIADB_POST_RELEASE_SEGMENT))
-define_macros.append(("PY_MARIADB_POST_RELEASE_NR", "\"%s\"" %
-                      PY_MARIADB_POST_RELEASE_NR))
-
-
+define_macros = [
+    ("PY_MARIADB_MAJOR_VERSION", PY_MARIADB_MAJOR_VERSION),
+    ("PY_MARIADB_MINOR_VERSION", PY_MARIADB_MINOR_VERSION),
+    ("PY_MARIADB_PATCH_VERSION", PY_MARIADB_PATCH_VERSION),
+    (
+        "PY_MARIADB_PRE_RELEASE_SEGMENT",
+        "\"%s\"" % PY_MARIADB_PRE_RELEASE_SEGMENT,
+    ),
+    ("PY_MARIADB_PRE_RELEASE_NR", "\"%s\"" % PY_MARIADB_PRE_RELEASE_NR),
+    (
+        "PY_MARIADB_POST_RELEASE_SEGMENT",
+        "\"%s\"" % PY_MARIADB_POST_RELEASE_SEGMENT,
+    ),
+    ("PY_MARIADB_POST_RELEASE_NR", "\"%s\"" % PY_MARIADB_POST_RELEASE_NR),
+]
 with open("mariadb/release_info.py", "w") as rel_info:
     rel_info.write("__author__ = '%s'\n__version__ = '%s'\n__version_info__"
                    " = %s\n" %

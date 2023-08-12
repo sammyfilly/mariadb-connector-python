@@ -24,13 +24,13 @@ class MariaDBConfiguration():
 def get_config(options):
     static = options["link_static"]
     mariadb_dir = options["install_dir"]
-    required_version = "3.2.4"
-
     if not os.path.exists(mariadb_dir):
+        required_version = "3.2.4"
+
         try:
             mariadb_dir = os.environ["MARIADB_CC_INSTALL_DIR"]
             cc_version = ["", ""]
-            print("using environment configuration " + mariadb_dir)
+            print(f"using environment configuration {mariadb_dir}")
         except KeyError:
 
             try:
@@ -62,22 +62,21 @@ def get_config(options):
                       "MARIADB_CC_INSTALL_DIR.")
                 sys.exit(3)
 
-    print("Found MariaDB Connector/C in '%s'" % mariadb_dir)
+    print(f"Found MariaDB Connector/C in '{mariadb_dir}'")
     cfg = MariaDBConfiguration()
     cfg.includes = [".\\include", mariadb_dir + "\\include", mariadb_dir +
                     "\\include\\mysql"]
     cfg.lib_dirs = [mariadb_dir + "\\lib"]
     cfg.libs = ["ws2_32", "advapi32", "kernel32", "shlwapi", "crypt32",
                 "secur32", "bcrypt"]
-    if static.lower() == "on" or static.lower() == "default":
+    if static.lower() in ["on", "default"]:
         cfg.libs.append("mariadbclient")
     else:
         print("dynamic")
     cfg.extra_link_args = ["/NODEFAULTLIB:LIBCMT"]
     cfg.extra_compile_args = ["/MD"]
 
-    f = open("./include/config_win.h", "w")
-    f.write("#define DEFAULT_PLUGINS_SUBDIR \"%s\\\\lib\\\\plugin\"" %
-            options["install_dir"].replace(""'\\', '\\\\'))
-    f.close()
+    with open("./include/config_win.h", "w") as f:
+        f.write("#define DEFAULT_PLUGINS_SUBDIR \"%s\\\\lib\\\\plugin\"" %
+                options["install_dir"].replace(""'\\', '\\\\'))
     return cfg

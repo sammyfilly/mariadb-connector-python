@@ -8,7 +8,7 @@ def select_1(loops, conn, paramstyle):
     cursor = conn.cursor()
     range_it = range(loops)
     t0 = pyperf.perf_counter()
-    for value in range_it:
+    for _ in range_it:
         cursor = conn.cursor()
         cursor.execute("select 1")
         rows = cursor.fetchall()

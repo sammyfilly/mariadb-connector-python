@@ -7,9 +7,7 @@ import pyperf
 def do_1000_param(loops, conn, paramstyle):
 
     range_it = range(loops)
-    params = []
-    for i in range(1, 1001):
-        params.append(i)
+    params = list(range(1, 1001))
     tupleParam = tuple(params)
 
     t0 = pyperf.perf_counter()

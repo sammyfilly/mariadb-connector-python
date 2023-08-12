@@ -68,7 +68,7 @@ class Connection(mariadb._mariadb.connection):
         if "host" in kwargs:
             host = kwargs.get("host")
             if version.Version(mariadb.mariadbapi_version) <\
-               version.Version('3.3.0') and ',' in host:
+                   version.Version('3.3.0') and ',' in host:
                 raise mariadb.ProgrammingError("Host failover list requires "
                                                "MariaDB Connector/C 3.3.0 "
                                                "or newer")
@@ -79,7 +79,7 @@ class Connection(mariadb._mariadb.connection):
             ssl = kwargs.pop("ssl", None)
             for key in ["ca", "cert", "capath", "key", "cipher"]:
                 if key in ssl:
-                    kwargs["ssl_%s" % key] = ssl[key]
+                    kwargs[f"ssl_{key}"] = ssl[key]
             kwargs["ssl"] = True
 
         super().__init__(*args, **kwargs)
@@ -202,7 +202,7 @@ class Connection(mariadb._mariadb.connection):
         self._check_closed()
         if not isinstance(id, int):
             raise mariadb.ProgrammingError("id must be of type int.")
-        stmt = "KILL %s" % id
+        stmt = f"KILL {id}"
         self._execute_command(stmt)
         self._read_response()
 
@@ -269,7 +269,7 @@ class Connection(mariadb._mariadb.connection):
           is limited to 64 characters.
 
         """
-        def __new__(self, format_id, transaction_id, branch_qualifier):
+        def __new__(cls, format_id, transaction_id, branch_qualifier):
             if not isinstance(format_id, int):
                 raise mariadb.ProgrammingError("argument 1 must be int, "
                                                "not %s",
@@ -290,9 +290,7 @@ class Connection(mariadb._mariadb.connection):
                                                "branch_qualifier exceeded.")
             if format_id == 0:
                 format_id = 1
-            return super().__new__(self, (format_id,
-                                          transaction_id,
-                                          branch_qualifier))
+            return super().__new__(cls, (format_id, transaction_id, branch_qualifier))
 
     def tpc_begin(self, xid):
         """
@@ -314,7 +312,7 @@ class Connection(mariadb._mariadb.connection):
         if type(xid).__name__ != "xid":
             raise mariadb.ProgrammingError("argument 1 must be xid "
                                            "not %s", type(xid).__name__)
-        stmt = "XA BEGIN '%s','%s',%s" % (xid[1], xid[2], xid[0])
+        stmt = f"XA BEGIN '{xid[1]}','{xid[2]}',{xid[0]}"
         try:
             self._execute_command(stmt)
             self._read_response()
@@ -354,7 +352,7 @@ class Connection(mariadb._mariadb.connection):
                                            "not %s" % type(xid).__name__)
 
         if self.tpc_state < TPC_STATE.PREPARE:
-            stmt = "XA END '%s','%s',%s" % (xid[1], xid[2], xid[0])
+            stmt = f"XA END '{xid[1]}','{xid[2]}',{xid[0]}"
             self._execute_command(stmt)
             try:
                 self._read_response()
@@ -363,9 +361,9 @@ class Connection(mariadb._mariadb.connection):
                 self.tpc_state = TPC_STATE.NONE
                 raise
 
-        stmt = "XA COMMIT '%s','%s',%s" % (xid[1], xid[2], xid[0])
+        stmt = f"XA COMMIT '{xid[1]}','{xid[2]}',{xid[0]}"
         if self.tpc_state < TPC_STATE.PREPARE:
-            stmt = stmt + " ONE PHASE"
+            stmt = f"{stmt} ONE PHASE"
         try:
             self._execute_command(stmt)
             self._read_response()
@@ -396,7 +394,7 @@ class Connection(mariadb._mariadb.connection):
                                            "prepared state.")
 
         xid = self._xid
-        stmt = "XA END '%s','%s',%s" % (xid[1], xid[2], xid[0])
+        stmt = f"XA END '{xid[1]}','{xid[2]}',{xid[0]}"
         try:
             self._execute_command(stmt)
             self._read_response()
@@ -405,7 +403,7 @@ class Connection(mariadb._mariadb.connection):
             self.tpc_state = TPC_STATE.NONE
             raise
 
-        stmt = "XA PREPARE '%s','%s',%s" % (xid[1], xid[2], xid[0])
+        stmt = f"XA PREPARE '{xid[1]}','{xid[2]}',{xid[0]}"
         try:
             self._execute_command(stmt)
             self._read_response()
@@ -441,7 +439,7 @@ class Connection(mariadb._mariadb.connection):
             xid = self._xid
 
         if self.tpc_state < TPC_STATE.PREPARE:
-            stmt = "XA END '%s','%s',%s" % (xid[1], xid[2], xid[0])
+            stmt = f"XA END '{xid[1]}','{xid[2]}',{xid[0]}"
             self._execute_command(stmt)
             try:
                 self._read_response()
@@ -450,7 +448,7 @@ class Connection(mariadb._mariadb.connection):
                 self.tpc_state = TPC_STATE.NONE
                 raise
 
-        stmt = "XA ROLLBACK '%s','%s',%s" % (xid[1], xid[2], xid[0])
+        stmt = f"XA ROLLBACK '{xid[1]}','{xid[2]}',{xid[0]}"
         try:
             self._execute_command(stmt)
             self._read_response()
@@ -487,7 +485,7 @@ class Connection(mariadb._mariadb.connection):
         self._check_closed()
 
         try:
-            self._execute_command("USE %s" % str(schema))
+            self._execute_command(f"USE {str(schema)}")
             self._read_response()
         except mariadb.Error:
             raise
@@ -642,7 +640,7 @@ class Connection(mariadb._mariadb.connection):
         if bool(mode) == self.autocommit:
             return
         try:
-            self._execute_command("SET AUTOCOMMIT=%s" % int(mode))
+            self._execute_command(f"SET AUTOCOMMIT={int(mode)}")
             self._read_response()
         except mariadb.Error:
             raise

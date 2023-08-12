@@ -21,9 +21,7 @@ def long_minus(s):
 
 
 def none_to_string(s):
-    if s is None:
-        return "None"
-    return s
+    return "None" if s is None else s
 
 
 conversions = {

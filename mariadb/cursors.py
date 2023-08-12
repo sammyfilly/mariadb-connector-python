@@ -81,13 +81,10 @@ class Cursor(mariadb._mariadb.cursor):
 
         # parse keywords
         if kwargs:
-            rtype = kwargs.pop("named_tuple", False)
-            if rtype:
+            if rtype := kwargs.pop("named_tuple", False):
                 self._resulttype = RESULT_NAMEDTUPLE
-            else:
-                rtype = kwargs.pop("dictionary", False)
-                if rtype:
-                    self._resulttype = RESULT_DICTIONARY
+            elif rtype := kwargs.pop("dictionary", False):
+                self._resulttype = RESULT_DICTIONARY
             buffered = kwargs.pop("buffered", True)
             self.buffered = buffered
             self._prepared = kwargs.pop("prepared", False)
@@ -119,32 +116,29 @@ class Cursor(mariadb._mariadb.cursor):
                     val = self._data[i]
                 if val is None:
                     replace = "NULL"
+                elif isinstance(val, INDICATOR.MrdbIndicator):
+                    if val == INDICATOR.NULL:
+                        replace = "NULL"
+                    if val == INDICATOR.DEFAULT:
+                        replace = "DEFAULT"
+                elif isinstance(val, Number):
+                    replace = val.__str__()
+                elif isinstance(val, (bytes, bytearray)):
+                    replace = "\"%s\"" % self.connection.escape_string(
+                        val.decode(encoding='latin1'))
                 else:
-                    if isinstance(val, INDICATOR.MrdbIndicator):
-                        if val == INDICATOR.NULL:
-                            replace = "NULL"
-                        if val == INDICATOR.DEFAULT:
-                            replace = "DEFAULT"
-                    elif isinstance(val, Number):
-                        replace = val.__str__()
-                    else:
-                        if isinstance(val, (bytes, bytearray)):
-                            replace = "\"%s\"" % self.connection.escape_string(
-                                val.decode(encoding='latin1'))
-                        else:
-                            replace = "\"%s\"" % self.connection.escape_string(
-                                val.__str__())
-                            extra_bytes = len(replace.encode("utf-8")) -\
-                                len(replace)
+                    replace = "\"%s\"" % self.connection.escape_string(
+                        val.__str__())
+                    extra_bytes = len(replace.encode("utf-8")) -\
+                            len(replace)
                 ofs = self._paramlist[i] + replace_diff
 
                 new_stmt = new_stmt[:ofs] + replace.__str__().encode("utf8") +\
-                    new_stmt[ofs+1:]
+                        new_stmt[ofs+1:]
                 replace_diff += len(replace) - 1 + extra_bytes
         return new_stmt
 
     def _check_execute_params(self):
-        # check data format
         if self._paramstyle in (PARAMSTYLE_QMARK, PARAMSTYLE_FORMAT):
             if not isinstance(self._data, (tuple, list)):
                 raise mariadb.ProgrammingError("Data argument must be "
@@ -158,15 +152,12 @@ class Cursor(mariadb._mariadb.cursor):
                 if self._keys[i] not in self._data:
                     raise mariadb.ProgrammingError("Dictionary doesn't contain"
                                                    " key '%s'" % self._keys[i])
-        else:
-            # check if number of place holders matches the number of
-            # supplied elements in data tuple
-            if self._paramlist and (
+        elif self._paramlist and (
                (not self._data and len(self._paramlist) > 0) or
                (len(self._data) != len(self._paramlist))):
-                raise mariadb.ProgrammingError(
-                    "statement (%s) doesn't match the number of data elements"
-                    " (%s)." % (len(self._paramlist), len(self._data)))
+            raise mariadb.ProgrammingError(
+                "statement (%s) doesn't match the number of data elements"
+                " (%s)." % (len(self._paramlist), len(self._data)))
 
     def callproc(self, sp: str, data: Sequence = ()):
         """
@@ -185,11 +176,8 @@ class Cursor(mariadb._mariadb.cursor):
 
         self.check_closed()
 
-        # create statement
-        params = ""
-        if data and len(data):
-            params = ("?," * len(data))[:-1]
-        statement = "CALL %s(%s)" % (sp, params)
+        params = ("?," * len(data))[:-1] if data and len(data) else ""
+        statement = f"CALL {sp}({params})"
         self._rowcount = 0
         self.execute(statement, data)
 
@@ -403,8 +391,7 @@ class Cursor(mariadb._mariadb.cursor):
         """
         self.check_closed()
 
-        row = self._fetch_row()
-        return row
+        return self._fetch_row()
 
     def fetchmany(self, size: int = 0):
         """
@@ -461,7 +448,7 @@ class Cursor(mariadb._mariadb.cursor):
                                            "for cursors with a buffered "
                                            "result set.")
 
-        if mode != "absolute" and mode != "relative":
+        if mode not in ["absolute", "relative"]:
             raise mariadb.ProgrammingError("Invalid or unknown scroll "
                                            "mode specified.")
 
@@ -470,14 +457,14 @@ class Cursor(mariadb._mariadb.cursor):
 
         if mode == "relative":
             if self.rownumber + value < 0 or \
-               self.rownumber + value > self.rowcount:
+                   self.rownumber + value > self.rowcount:
                 raise mariadb.ProgrammingError("Position value "
                                                "is out of range.")
             new_pos = self.rownumber + value
+        elif value < 0 or value >= self.rowcount:
+            raise mariadb.ProgrammingError("Position value "
+                                           "is out of range.")
         else:
-            if value < 0 or value >= self.rowcount:
-                raise mariadb.ProgrammingError("Position value "
-                                               "is out of range.")
             new_pos = value
 
         self._seek(new_pos)
@@ -517,9 +504,7 @@ class Cursor(mariadb._mariadb.cursor):
         determined by the interface.
         """
         self.check_closed()
-        if self._rowcount > 0:
-            return self._rowcount
-        return super().rowcount
+        return self._rowcount if self._rowcount > 0 else super().rowcount
 
     @property
     def sp_outparams(self):
@@ -546,9 +531,7 @@ class Cursor(mariadb._mariadb.cursor):
         self.check_closed()
 
         id = self.insert_id
-        if id > 0:
-            return id
-        return None
+        return id if id > 0 else None
 
     @property
     def connection(self):
