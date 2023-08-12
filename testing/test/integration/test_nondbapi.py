@@ -122,7 +122,7 @@ class CursorTest(unittest.TestCase):
         cursor = self.connection.cursor()
         cursor.execute("CREATE TEMPORARY TABLE test_escape (a varchar(100))")
         str = 'This is a \ and a \"'  # noqa: W605
-        cmd = "INSERT INTO test_escape VALUES('%s')" % str
+        cmd = f"INSERT INTO test_escape VALUES('{str}')"
 
         try:
             cursor.execute(cmd)
@@ -130,7 +130,7 @@ class CursorTest(unittest.TestCase):
             pass
 
         str = self.connection.escape_string(str)
-        cmd = "INSERT INTO test_escape VALUES('%s')" % str
+        cmd = f"INSERT INTO test_escape VALUES('{str}')"
         cursor.execute(cmd)
         del cursor
 

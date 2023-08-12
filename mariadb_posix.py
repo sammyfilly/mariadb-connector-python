@@ -18,13 +18,12 @@ class MariaDBConfiguration():
 
 def mariadb_config(config, option):
     from os import popen
-    file = popen("%s --%s" % (config, option))
+    file = popen(f"{config} --{option}")
     data = file.read().strip().split()
-    rc = file.close()
-    if rc:
+    if rc := file.close():
         if rc / 256:
             data = []
-        if rc / 256 > 1:
+        if rc > 256:
             raise EnvironmentError(
                 """mariadb_config not found.
 
@@ -46,7 +45,6 @@ def dequote(s):
 
 
 def get_config(options):
-    required_version = "3.3.1"
     static = options["link_static"]
 
     try:
@@ -60,9 +58,11 @@ def get_config(options):
         config_prg = "mariadb_config"
 
     cc_version = mariadb_config(config_prg, "cc_version")
+    required_version = "3.3.1"
     if version.Version(cc_version[0]) < version.Version(required_version):
-        print('MariaDB Connector/Python requires MariaDB Connector/C '
-              '>= %s, found version %s' % (required_version, cc_version[0]))
+        print(
+            f'MariaDB Connector/Python requires MariaDB Connector/C >= {required_version}, found version {cc_version[0]}'
+        )
         sys.exit(2)
     cfg = MariaDBConfiguration()
     cfg.version = cc_version[0]
@@ -78,8 +78,9 @@ def get_config(options):
     mariadb_includes.extend(["./include"])
     if static.lower() == "on":
         cfg.extra_link_args = ["-u mysql_ps_fetch_functions"]
-        cfg.extra_objects = ['{}/lib{}.a'.format(cfg.lib_dirs[0], lib)
-                             for lib in ["mariadbclient"]]
+        cfg.extra_objects = [
+            f'{cfg.lib_dirs[0]}/lib{lib}.a' for lib in ["mariadbclient"]
+        ]
         cfg.libs = [dequote(i[2:])
                     for i in extra_libs if i.startswith("-l")]
     cfg.includes = mariadb_includes

@@ -9,7 +9,7 @@ def init_db(conn, paramstyle):
     cursor.execute("DROP TABLE IF EXISTS str_test")
     cursor.execute("CREATE TABLE str_test ("
                    "col1 varchar(200), col2 TEXT, col3 TEXT)")
-    vals = [(str1, str2, str3) for i in range(100)]
+    vals = [(str1, str2, str3) for _ in range(100)]
     if paramstyle == 'qmark':
         cursor.executemany("INSERT INTO str_test VALUES (?, ?, ?)", vals)
     else:
@@ -42,7 +42,7 @@ def init_db(conn, paramstyle):
         pass
     createTable = "CREATE TABLE perfTestTextBatch (id MEDIUMINT NOT NULL AUTO_INCREMENT,t0 text, PRIMARY KEY (id)) COLLATE='utf8mb4_unicode_ci'"
     try:
-        cursor.execute(createTable + " ENGINE = BLACKHOLE")
+        cursor.execute(f"{createTable} ENGINE = BLACKHOLE")
     except Exception:
         cursor.execute(createTable)
 

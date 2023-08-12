@@ -28,6 +28,6 @@ for i in range(0, len(error_definitions)):
        and x[1][:9] != "ER_UNUSED"):
         try:
             if int(x[2]) > 0:
-                print("%s = %s" % (x[1], x[2]))
+                print(f"{x[1]} = {x[2]}")
         except Exception:
             pass

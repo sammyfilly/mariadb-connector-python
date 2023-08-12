@@ -8,7 +8,7 @@ chars = [ "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", 
 
 def randomString(length):
     result = "";
-    for value in range(length):
+    for _ in range(length):
         result = result + chars[random.randint(0, (len(chars) - 1))]
     return result;
 
@@ -18,7 +18,7 @@ def bulk(loops, conn, paramstyle):
 #    conn.autocommit= False
     t0 = pyperf.perf_counter()
     s = randomString(100)
-    vals = [(s,) for i in range(100)]
+    vals = [(s,) for _ in range(100)]
 
     range_it = range(loops)
     for value in range_it:

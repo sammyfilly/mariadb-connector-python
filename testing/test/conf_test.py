@@ -5,11 +5,9 @@ import os
 
 
 def glob():
-    dm = {
+    return {
         "module": os.environ.get('TEST_MODULE', 'mariadb'),
-        }
-
-    return dm
+    }
 
 
 def conf():

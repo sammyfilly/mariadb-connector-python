@@ -81,28 +81,27 @@ class ConnectionPool(object):
         key_words = ["pool_name", "pool_size", "pool_reset_connection",
                      "pool_validation_interval"]
 
-        # check if pool_name was provided
-        if kwargs and "pool_name" in kwargs:
-
-            # check if pool_name already exists
-            if kwargs["pool_name"] in mariadb._CONNECTION_POOLS:
-                raise mariadb.ProgrammingError("Pool '%s' already exists"
-                                               % kwargs["pool_name"])
-        else:
+        if not kwargs or "pool_name" not in kwargs:
             raise mariadb.ProgrammingError("No pool name specified")
 
+            # check if pool_name already exists
+        if kwargs["pool_name"] in mariadb._CONNECTION_POOLS:
+            raise mariadb.ProgrammingError(
+                f"""Pool '{kwargs["pool_name"]}' already exists"""
+            )
         # save pool keyword arguments
         self._pool_args["name"] = kwargs.get("pool_name")
         self._pool_args["size"] = int(kwargs.get("pool_size", 5))
         self._pool_args["reset_connection"] = \
-            bool(kwargs.get("pool_reset_connection", True))
+                bool(kwargs.get("pool_reset_connection", True))
         self._pool_args["validation_interval"] = \
-            int(kwargs.get("pool_validation_interval", 500))
+                int(kwargs.get("pool_validation_interval", 500))
 
         # validate pool size (must be in range between 1 and MAX_POOL_SIZE)
         if not (0 < self._pool_args["size"] <= MAX_POOL_SIZE):
-            raise mariadb.ProgrammingError("Pool size must be in range of "
-                                           "1 and %s" % MAX_POOL_SIZE)
+            raise mariadb.ProgrammingError(
+                f"Pool size must be in range of 1 and {MAX_POOL_SIZE}"
+            )
 
         # store pool and connection arguments
         self._conn_args = kwargs.copy()
@@ -110,10 +109,10 @@ class ConnectionPool(object):
             if key in self._conn_args:
                 del self._conn_args[key]
 
-        if len(self._conn_args) > 0:
+        if self._conn_args:
             with self._lock_pool:
                 # fill connection pool
-                for i in range(0, self._pool_args["size"]):
+                for _ in range(0, self._pool_args["size"]):
                     try:
                         connection = mariadb.Connection(**self._conn_args)
                     except mariadb.Error:
@@ -152,12 +151,11 @@ class ConnectionPool(object):
         return self.add_connection()
 
     def __repr__(self):
-        if (self.__closed):
-            return "<mariadb.connectionPool.ConnectionPool object (closed) "\
-                   "at %s>" % (hex(id(self)),)
-        else:
-            return "<mariadb.connectionPool.ConnectionPool object (name=%s) "\
-                   "at %s>" % (self.pool_name, hex(id(self)))
+        return (
+            f"<mariadb.connectionPool.ConnectionPool object (closed) at {hex(id(self))}>"
+            if self.__closed
+            else f"<mariadb.connectionPool.ConnectionPool object (name={self.pool_name}) at {hex(id(self))}>"
+        )
 
     def add_connection(self, connection=None):
         """
@@ -168,8 +166,9 @@ class ConnectionPool(object):
         """
 
         if not self._conn_args:
-            raise mariadb.PoolError("Couldn't get configuration for pool %s" %
-                                    self._pool_args["name"])
+            raise mariadb.PoolError(
+                f"""Couldn't get configuration for pool {self._pool_args["name"]}"""
+            )
 
         if (connection is not None and
                 not isinstance(connection, mariadb.connections.Connection)):
@@ -177,8 +176,9 @@ class ConnectionPool(object):
                                            "connection object")
 
         if connection is None and len(self._conn_args) == 0:
-            raise mariadb.PoolError("Can't get configuration for pool %s" %
-                                    self._pool_args["name"])
+            raise mariadb.PoolError(
+                f"""Can't get configuration for pool {self._pool_args["name"]}"""
+            )
 
         total = len(self._connections_free + self._connections_used)
         if total >= self._pool_args["size"]:

@@ -136,13 +136,11 @@ def connect(*args, connectionclass=mariadb.connections.Connection, **kwargs):
     """
     if kwargs:
         if "pool_name" in kwargs:
-            if not kwargs["pool_name"] in mariadb._CONNECTION_POOLS:
+            if kwargs["pool_name"] not in mariadb._CONNECTION_POOLS:
                 pool = mariadb.ConnectionPool(**kwargs)
             else:
                 pool = mariadb._CONNECTION_POOLS[kwargs["pool_name"]]
-            c = pool.get_connection()
-            return c
-
+            return pool.get_connection()
     connection = connectionclass(*args, **kwargs)
     if not isinstance(connection, mariadb.connections.Connection):
         raise mariadb.ProgrammingError("%s is not an instance of "

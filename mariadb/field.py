@@ -49,9 +49,7 @@ field_flags = {FIELD_FLAG.NOT_NULL: "NOT_NULL",
 class fieldinfo():
 
     def type(self, description):
-        if description[1] in field_types:
-            return field_types[description[1]]
-        return None
+        return field_types[description[1]] if description[1] in field_types else None
 
     def flag(self, description):
         flags = [field_flags[f] for f in field_flags.keys()
